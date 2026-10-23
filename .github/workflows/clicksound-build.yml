@@ -63,6 +63,41 @@ jobs:
           print("archivos con gd::string ->", n)
           PY
 
+      - name: Parchear rutas (asp::fs::Path)
+        shell: bash
+        run: |
+          python3 -I - mod_src <<'PY'
+          import sys, glob, os, re
+          root = sys.argv[1]
+          open(f"{root}/src/csPath.hpp", "w").write('''#pragma once
+          #include <Geode/Geode.hpp>
+          #include <filesystem>
+          #include <string>
+          template <class T> inline std::filesystem::path csStd(T const& p) { return std::filesystem::path(std::string(p.string())); }
+          inline asp::fs::Path csA(std::filesystem::path const& p) { return asp::fs::Path(p.string()); }
+          ''')
+          subs = [
+           (r'(Loader::get\(\)->getInstalledMod\("beat\.click-sound"\)->getConfigDir\(\))', r'csStd(\1)'),
+           (r'(?<!\{ )((?:Mod::get\(\)|mod)->(?:getConfigDir|getResourcesDir)\(\))', r'csStd(\1)'),
+           (r'(dirs::get(?:TempDir|GeodeDir)\(\))', r'csStd(\1)'),
+           (r'\{ getPersistentDir, \{', r'{ csA(getPersistentDir), {'),
+           (r'Result<std::optional<std::filesystem::path>> res', r'Result<std::optional<asp::fs::Path>> res'),
+           (r'auto path = opt\.value\(\);', r'auto path = csStd(opt.value());'),
+           (r'file::Unzip::create\((\w+)\)', r'file::Unzip::create(csA(\1))'),
+           (r'extractAllTo\((\w+)\)', r'extractAllTo(csA(\1))'),
+           (r'res\.into\(zipPath\)', r'res.into(csA(zipPath))'),
+           (r'readJson\(featuredPath\)', r'readJson(csA(featuredPath))'),
+          ]
+          for f in glob.glob(f"{root}/src/**/*", recursive=True):
+              if not f.endswith((".cpp", ".hpp", ".h")) or f.endswith("csPath.hpp"): continue
+              t = open(f, encoding="utf-8").read(); o = t
+              for a, b in subs: t = re.sub(a, b, t)
+              if t != o:
+                  rel = os.path.relpath(f"{root}/src/csPath.hpp", os.path.dirname(f))
+                  t = f'#include "{rel}"\n' + t
+                  open(f, "w", encoding="utf-8").write(t); print("patched", f)
+          PY
+
       - name: Install Ninja
         run: sudo apt-get update && sudo apt-get install -y ninja-build
 
