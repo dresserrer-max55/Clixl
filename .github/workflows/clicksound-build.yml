@@ -126,6 +126,10 @@ jobs:
         run: |
           git clone --filter=blob:none https://github.com/geode-sdk/bindings "$GITHUB_WORKSPACE/bindings-clone"
           git -C "$GITHUB_WORKSPACE/bindings-clone" checkout "$BINDINGS_REF"
+          # El SDK declara actionsForKey -> std::vector<int>; la binding lo tiene como TodoReturn y choca
+          BRO="$GITHUB_WORKSPACE/bindings-clone/bindings/2.2091/GeometryDash.bro"
+          sed -i 's/virtual TodoReturn actionsForKey(/virtual std::vector<int> actionsForKey(/' "$BRO"
+          grep -n "actionsForKey" "$BRO"
           git -C "$GITHUB_WORKSPACE/bindings-clone" log -1 --format='bindings %h %ad %s' --date=short
           echo "GEODE_BINDINGS_REPO_PATH=$GITHUB_WORKSPACE/bindings-clone" >> "$GITHUB_ENV"
 
