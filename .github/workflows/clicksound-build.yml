@@ -112,8 +112,13 @@ jobs:
 
       - name: Clone Geode SDK (${{ env.GEODE_REF }})
         run: |
-          git clone --depth 1 --branch "$GEODE_REF" --recurse-submodules --shallow-submodules \
-            https://github.com/geode-sdk/geode "$GITHUB_WORKSPACE/geode-sdk-clone"
+          # Commit fijo: la rama v6 recibio un cambio roto (CCKeyboardActionManager::actionsForKey sin enumKeyCodes)
+          mkdir "$GITHUB_WORKSPACE/geode-sdk-clone" && cd "$GITHUB_WORKSPACE/geode-sdk-clone"
+          git init -q && git remote add origin https://github.com/geode-sdk/geode
+          git fetch -q --depth 1 origin 9332ea7d7ae82350c52ec05eafdd02fd1fe7e75b
+          git checkout -q FETCH_HEAD
+          git submodule update --init --recursive --depth 1
+          cd "$GITHUB_WORKSPACE"
           echo "GEODE_SDK=$GITHUB_WORKSPACE/geode-sdk-clone" >> "$GITHUB_ENV"
           git -C geode-sdk-clone log -1 --format='Geode %h %ad %s' --date=short
           grep -n "android:" geode-sdk-clone/CMakeLists.txt | head -2
@@ -126,10 +131,6 @@ jobs:
         run: |
           git clone --filter=blob:none https://github.com/geode-sdk/bindings "$GITHUB_WORKSPACE/bindings-clone"
           git -C "$GITHUB_WORKSPACE/bindings-clone" checkout "$BINDINGS_REF"
-          # El SDK declara actionsForKey -> std::vector<int>; la binding lo tiene como TodoReturn y choca
-          BRO="$GITHUB_WORKSPACE/bindings-clone/bindings/2.2091/GeometryDash.bro"
-          sed -i 's/virtual TodoReturn actionsForKey(/virtual std::vector<int> actionsForKey(/' "$BRO"
-          grep -n "actionsForKey" "$BRO"
           git -C "$GITHUB_WORKSPACE/bindings-clone" log -1 --format='bindings %h %ad %s' --date=short
           echo "GEODE_BINDINGS_REPO_PATH=$GITHUB_WORKSPACE/bindings-clone" >> "$GITHUB_ENV"
 
