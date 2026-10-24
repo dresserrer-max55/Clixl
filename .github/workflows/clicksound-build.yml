@@ -112,10 +112,10 @@ jobs:
 
       - name: Clone Geode SDK (${{ env.GEODE_REF }})
         run: |
-          # Commit fijo: la rama v6 recibio un cambio roto (CCKeyboardActionManager::actionsForKey sin enumKeyCodes)
+          # Commit fijo anterior al cambio roto de la rama v6 (commit f8d94ebe, 23-oct)
           mkdir "$GITHUB_WORKSPACE/geode-sdk-clone" && cd "$GITHUB_WORKSPACE/geode-sdk-clone"
           git init -q && git remote add origin https://github.com/geode-sdk/geode
-          git fetch -q --depth 1 origin 9332ea7d7ae82350c52ec05eafdd02fd1fe7e75b
+          git fetch -q --depth 1 origin 8ba1a0a9588e153e672330a47598487eb118c900
           git checkout -q FETCH_HEAD
           git submodule update --init --recursive --depth 1
           cd "$GITHUB_WORKSPACE"
