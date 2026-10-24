@@ -74,6 +74,7 @@ jobs:
           #include <filesystem>
           #include <string>
           template <class T> inline std::filesystem::path csStd(T const& p) { return std::filesystem::path(std::string(p.string())); }
+          inline std::filesystem::path csGetSaved() { return std::filesystem::path(geode::Mod::get()->getSavedValue<std::string>("cspi-persistent-dir")); }
           inline asp::fs::Path csA(std::filesystem::path const& p) { return asp::fs::Path(p.string()); }
           ''')
           subs = [
@@ -86,6 +87,8 @@ jobs:
            (r'file::Unzip::create\((\w+)\)', r'file::Unzip::create(csA(\1))'),
            (r'extractAllTo\((\w+)\)', r'extractAllTo(csA(\1))'),
            (r'res\.into\(zipPath\)', r'res.into(csA(zipPath))'),
+           (r'Mod::get\(\)->getSavedValue<std::filesystem::path>\("cspi-persistent-dir"\)', r'csGetSaved()'),
+           (r'Mod::get\(\)->setSavedValue<std::filesystem::path>\("cspi-persistent-dir", (.+?)\);', r'Mod::get()->setSavedValue<std::string>("cspi-persistent-dir", std::filesystem::path(\1).string());'),
            (r'readJson\(featuredPath\)', r'readJson(csA(featuredPath))'),
           ]
           for f in glob.glob(f"{root}/src/**/*", recursive=True):
